@@ -92,6 +92,16 @@ paths:
       responses:
         '204':
           description: Successful logout
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid Authorization header format:
+                  value:
+                    error: Invalid authorization header format
+          description: Invalid Authorization header format
         '401':
           content:
             application/json:
@@ -101,15 +111,12 @@ paths:
                 Invalid Authorization header:
                   value:
                     error: Invalid authorization header
-                Invalid Authorization header format:
-                  value:
-                    error: Invalid authorization header format
-                Missing Authorization header:
-                  value:
-                    error: Missing Authorization header
                 Invalid token:
                   value:
                     error: Invalid token
+                Missing Authorization header:
+                  value:
+                    error: Missing Authorization header
           description: Invalid Authorization header
       security:
         -
@@ -140,19 +147,32 @@ paths:
                     name: test
                     username: test
           description: Returns user's details
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid Authorization header format:
+                  value:
+                    error: Invalid authorization header format
+          description: Invalid Authorization header format
         '401':
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
               examples:
-                Missing authorization header:
-                  value:
-                    error: Missing authorization header
-                Invalid authorization header:
+                Invalid Authorization header:
                   value:
                     error: Invalid authorization header
-          description: Unauthorized
+                Missing Authorization header:
+                  value:
+                    error: Missing Authorization header
+                Invalid token:
+                  value:
+                    error: Invalid token
+          description: Invalid Authorization header
       security:
         -
           Bearer: []
@@ -163,19 +183,6 @@ paths:
     description: >-
       The REST endpoint/path used to list and create zero or more `transaction` entities.  This path
       contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
-    get:
-      responses:
-        '200':
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/transaction'
-          description: Successful resposnse - returns an array of `transaction` entities.
-      operationId: gettransactions
-      summary: List All transactions
-      description: Gets a list of all `transaction` entities.
     post:
       requestBody:
         description: A new `transaction` to be created.
@@ -183,69 +190,61 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/transaction'
-            examples:
-              Invalid amount:
-                value:
-                  error: invalid amount
-              Missing parameter:
-                value:
-                  error: 'Transaction validation failed: .* : Path ''.*'' is required'
-              Parameter is shorter than the minimum allowed length:
-                value:
-                  error: Path '.*' ('.*') is shorter that the minimum allowed length
         required: true
+      tags:
+        - transactions
       responses:
-        '201':
-          description: Successful response.
-      operationId: createtransaction
-      summary: Create a transaction
-      description: Creates a new instance of a `transaction`.
-  '/transactions/{transactionId}':
-    summary: Path used to manage a single transaction.
-    description: >-
-      The REST endpoint/path used to get, update, and delete single instances of an `transaction`.  This
-      path contains `GET`, `PUT`, and `DELETE` operations used to perform the get, update, and delete
-      tasks, respectively.
-    get:
-      responses:
-        '200':
+        '204':
+          description: Successful transaction creation
+        '400':
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/transaction'
-          description: Successful response - returns a single `transaction`.
-      operationId: gettransaction
-      summary: Get a transaction
-      description: Gets the details of a single instance of a `transaction`.
-    put:
-      requestBody:
-        description: Updated `transaction` information.
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/transaction'
-        required: true
-      responses:
-        '202':
-          description: Successful response.
-      operationId: updatetransaction
-      summary: Update a transaction
-      description: Updates an existing `transaction`.
-    delete:
-      responses:
-        '204':
-          description: Successful response.
-      operationId: deletetransaction
-      summary: Delete a transaction
-      description: Deletes an existing `transaction`.
-    parameters:
-      -
-        name: transactionId
-        description: A unique identifier for a `transaction`.
-        schema:
-          type: string
-        in: path
-        required: true
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid amount:
+                  value:
+                    error: invalid amount
+                Missing parameter:
+                  value:
+                    error: 'Transaction validation failed: .* : Path ''.*'' is required'
+                Parameter is shorter than the minimum allowed length:
+                  value:
+                    error: Path '.*' ('.*') is shorter that the minimum allowed length
+                Invalid Authorization header format:
+                  value:
+                    error: Invalid authorization header format
+          description: Invalid Authorization header format
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid Authorization header:
+                  value:
+                    error: Invalid authorization header
+                Missing Authorization header:
+                  value:
+                    error: Missing Authorization header
+                Invalid token:
+                  value:
+                    error: Invalid token
+          description: Invalid Authorization header
+        '403':
+          content:
+            application/json:
+              examples:
+                Not your account:
+                  value:
+                    error: Not your account
+          description: Not your account
+      security:
+        -
+          Bearer: []
+      operationId: createtransaction
+      summary: Create a transaction
+      description: Creates a new instance of a `transaction`.
 components:
   schemas:
     user:
@@ -289,10 +288,12 @@ components:
           type: integer
         explanation:
           type: string
+        senderName:
+          type: string
       example:
-        accountFrom: 614cde2a57d341d33e896690
-        accountTo: 615312239137d7783db031d6
-        amount: 1
+        accountFrom: b97900220f41acec02d67fe4d087b108300
+        accountTo: b97bf6039a10a4186d164b1c356df73a20c
+        amount: 0.01
         explanation: Don’t go spend it all at once
   securitySchemes:
     Bearer:
@@ -305,3 +306,8 @@ tags:
   -
     name: users
     description: ''
+  -
+    name: transactions
+    description: ''
+
+
