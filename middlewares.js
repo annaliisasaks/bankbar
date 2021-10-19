@@ -154,7 +154,7 @@ async function refund(transaction) {
 
 }
 
-exports.processTransactions = async function (){
+exports.processTransactions =async  function (){
 
     //console.log('Running processTransactions')
 
@@ -219,6 +219,6 @@ exports.processTransactions = async function (){
     }, Error)
 
 
-    //Recursively call itself again
+    // Recursively call itself again
     setTimeout(exports.processTransactions, 1000)
 }

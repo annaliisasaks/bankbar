@@ -67,7 +67,6 @@ router.post('/', verifyToken, async function (req, res) {
 
 
 
-
         const transaction = await new Transaction({
             userId: req.userId,
             amount: req.body.amount,
