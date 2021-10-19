@@ -1,0 +1,307 @@
+openapi: 3.0.2
+info:
+  title: Barbank
+  version: 1.0.3
+paths:
+  /users:
+    summary: Path used to manage the list of users.
+    description: >-
+      The REST endpoint/path used to list and create zero or more `user` entities.  This path contains a
+      `GET` and `POST` operation to perform the list and create tasks, respectively.
+    post:
+      requestBody:
+        description: A new `user` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/user'
+        required: true
+      tags:
+        - users
+      responses:
+        '201':
+          description: Successful response.
+        '400':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                'User validation failed: {param}: Path `{param}` is required.':
+                  value:
+                    error: 'User validation failed: {param}: Path `{param}` is required.'
+          description: Input validation failed. Some parameter is missing or in incorrect format.
+        '409':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Username already exists:
+                  value:
+                    error: Username already exists
+          description: Username already exists
+      operationId: createuser
+      summary: Create a user
+      description: Creates a new instance of a `user`.
+  /sessions:
+    summary: Path used to manage the list of sessions.
+    description: >-
+      The REST endpoint/path used to list and create zero or more `session` entities.  This path
+      contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+    post:
+      requestBody:
+        description: A new `session` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/session'
+            examples:
+              POST /sessions request body:
+                value:
+                  username: test
+                  password: testtest
+        required: true
+      tags:
+        - sessions
+      responses:
+        '201':
+          content:
+            application/json:
+              examples:
+                POST /sessions 201 response:
+                  value:
+                    token: 615c0ba991b810f1daca206f
+          description: Successful response.
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid credentials:
+                  value:
+                    error: Invalid credentials
+          description: Invalid credentials
+      operationId: createsession
+      summary: Create a session
+      description: Creates a new instance of a `session`.
+    delete:
+      tags:
+        - sessions
+      responses:
+        '204':
+          description: Successful logout
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Invalid Authorization header:
+                  value:
+                    error: Invalid authorization header
+                Invalid Authorization header format:
+                  value:
+                    error: Invalid authorization header format
+                Missing Authorization header:
+                  value:
+                    error: Missing Authorization header
+                Invalid token:
+                  value:
+                    error: Invalid token
+          description: Invalid Authorization header
+      security:
+        -
+          Bearer: []
+  /users/current:
+    get:
+      tags:
+        - users
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/user'
+              examples:
+                User details:
+                  value:
+                    accounts:
+                      -
+                        balance: 10000
+                        createdAt: '2021-09-23T20:00:54.508Z'
+                        currency: USD
+                        id: 614cde2a57d341d33e89668e
+                        name: Main
+                        number: abc900220f41acec02d67fe4d087b108300
+                        userId: 614cde2a57d341d33e896690
+                    id: 614cde2a57d341d33e896690
+                    name: test
+                    username: test
+          description: Returns user's details
+        '401':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error'
+              examples:
+                Missing authorization header:
+                  value:
+                    error: Missing authorization header
+                Invalid authorization header:
+                  value:
+                    error: Invalid authorization header
+          description: Unauthorized
+      security:
+        -
+          Bearer: []
+      summary: Get user's details
+      description: Returns instance of `user`
+  /transactions:
+    summary: Path used to manage the list of transactions.
+    description: >-
+      The REST endpoint/path used to list and create zero or more `transaction` entities.  This path
+      contains a `GET` and `POST` operation to perform the list and create tasks, respectively.
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/transaction'
+          description: Successful resposnse - returns an array of `transaction` entities.
+      operationId: gettransactions
+      summary: List All transactions
+      description: Gets a list of all `transaction` entities.
+    post:
+      requestBody:
+        description: A new `transaction` to be created.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transaction'
+            examples:
+              Invalid amount:
+                value:
+                  error: invalid amount
+              Missing parameter:
+                value:
+                  error: 'Transaction validation failed: .* : Path ''.*'' is required'
+              Parameter is shorter than the minimum allowed length:
+                value:
+                  error: Path '.*' ('.*') is shorter that the minimum allowed length
+        required: true
+      responses:
+        '201':
+          description: Successful response.
+      operationId: createtransaction
+      summary: Create a transaction
+      description: Creates a new instance of a `transaction`.
+  '/transactions/{transactionId}':
+    summary: Path used to manage a single transaction.
+    description: >-
+      The REST endpoint/path used to get, update, and delete single instances of an `transaction`.  This
+      path contains `GET`, `PUT`, and `DELETE` operations used to perform the get, update, and delete
+      tasks, respectively.
+    get:
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/transaction'
+          description: Successful response - returns a single `transaction`.
+      operationId: gettransaction
+      summary: Get a transaction
+      description: Gets the details of a single instance of a `transaction`.
+    put:
+      requestBody:
+        description: Updated `transaction` information.
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/transaction'
+        required: true
+      responses:
+        '202':
+          description: Successful response.
+      operationId: updatetransaction
+      summary: Update a transaction
+      description: Updates an existing `transaction`.
+    delete:
+      responses:
+        '204':
+          description: Successful response.
+      operationId: deletetransaction
+      summary: Delete a transaction
+      description: Deletes an existing `transaction`.
+    parameters:
+      -
+        name: transactionId
+        description: A unique identifier for a `transaction`.
+        schema:
+          type: string
+        in: path
+        required: true
+components:
+  schemas:
+    user:
+      title: Root Type for user
+      description: ''
+      type: object
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        name:
+          type: string
+      example:
+        username: test
+        password: testtest
+        name: test
+    error:
+      title: Root Type for error
+      description: ''
+      type: object
+      properties:
+        error:
+          type: string
+      example:
+        error: Error message.
+    session:
+      description: ''
+      type: object
+    transaction:
+      title: Root Type for transaction
+      description: ''
+      type: object
+      properties:
+        accountFrom:
+          type: string
+        accountTo:
+          type: string
+        amount:
+          format: int32
+          type: integer
+        explanation:
+          type: string
+      example:
+        accountFrom: 614cde2a57d341d33e896690
+        accountTo: 615312239137d7783db031d6
+        amount: 1
+        explanation: Don’t go spend it all at once
+  securitySchemes:
+    Bearer:
+      scheme: bearer
+      type: http
+tags:
+  -
+    name: sessions
+    description: ''
+  -
+    name: users
+    description: ''
