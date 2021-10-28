@@ -6,7 +6,8 @@ const Transaction = require("./models/Transaction")
 const fetch = require("node-fetch")
 const jose = require('node-jose')
 const fs = require('fs')
-//const {sendRequest} = require("./middlewares");
+const nock = require('nock')
+const {sendRequest} = require("./middlewares");
 
 exports.verifyToken = async (req, res, next) => {
 
@@ -100,13 +101,28 @@ async function createSignedTransaction(input) {
     let privateKey
     try {
         privateKey = fs.readFileSync('private.key', 'utf8')
-        const keystore = jose.JWK.createKeyStore();
-        const key = await keystore.add(privateKey, 'pem')
-        return await jose.JWS.createSign({format: 'compact'}, key).update(JSON.stringify(input), "utf8").final()
+        let keystore = jose.JWK.createKeyStore();
+        let key = await keystore.add(privateKey, 'pem')
+        let help = await jose.JWS.createSign({format: 'compact'}, key).update(JSON.stringify(input), "utf8").final()
+        return help
     } catch (err) {
         console.error('Error reading private key' + err)
         throw Error('Error reading private key' + err)
     }
+}
+
+
+let nockScope
+
+if (process.env.TEST_MODE === 'true') {
+    const nockUrl = new URL(bankTo.transactionUrl)
+
+    console.log('Nocking ' + JSON.stringify(nockUrl))
+
+    nockScope = nock(`${nockUrl.protocol}//${nockUrl.host}`)
+        .persist()
+        .post(nockUrl.pathname)
+        .reply(200, {receiverName: 'foobar'})
 }
 
 async function sendRequestToBank(destinationBank, transactionAsJwt) {
@@ -136,6 +152,7 @@ exports.sendRequest = async (method, url, data) => {
     }
 
     try {
+        console.log(url)
         let response = await fetch(url, options);
 
         // Parse response body text
@@ -153,6 +170,8 @@ async function refund(transaction) {
         const accountFrom = await Account.findOne({number: transaction.accountFrom})
         console.log('Refunding transaction ' + transaction._id + ' by ' + transaction.amount)
         accountFrom.balance += transaction.amount
+        await accountFrom.save()
+
     } catch (e) {
         console.log('Error refunding account: ')
         console.log('Reason: ' + e.message)
@@ -168,10 +187,6 @@ exports.processTransactions = async function () {
     pendingTransactions.forEach(async transaction => {
 
         console.log('Processing transaction ' + transaction._id)
-
-        let oServerResponse
-            , timeout
-            , bankTo
 
         // Assert that the transaction has not expired
         if (isExpired(transaction)) {
@@ -213,10 +228,10 @@ exports.processTransactions = async function () {
                 senderName: transaction.senderName
             }));
 
-            /*if (typeof response.error !== 'undefined') {
+            if (typeof response.error !== 'undefined') {
                 return await setStatus(transaction, 'Failed', response.error)
 
-            }*/
+            }
 
             transaction.receiverName = response.receiverName
             console.log('Completed transaction ' + transaction._id)
@@ -232,31 +247,6 @@ exports.processTransactions = async function () {
             return await setStatus(transaction, 'Pending', e.message)
 
         }
-
-        if (!bankTo) {console.log('loop: WARN: failed to get bankTo')
-        //set transaction status failed
-            transaction.status='failed'
-            transaction.statusDetail = 'There is no bank with prefix ' + bankPrefix
-            transaction.save()
-            return
-        }
-
-
-            // Actually send the request
-            const nock = require('nock')
-            let nockScope
-
-            if (process.env.Test_Mode === 'true') {
-                const nockUrl = new URL(bankTo.transactionUrl)
-
-                console.log('Nocking '+JSON.stringify(nockUrl))
-
-                nockScope = nock(`${nockUrl.protocol}//${nockUrl.host}`)
-                    .persist()
-                    .post(nockUrl.pathname)
-                    .reply(200, {receiverName: "foobar"})
-            }
-
 
     }, Error)
 
